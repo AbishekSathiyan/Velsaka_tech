@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------
+   Base Theme (VELSAKA Dark UI)
+------------------------------ */
+body {
+  @apply bg-[#0B1120] text-[#e4e1ee] font-body;
+  overflow-x: hidden;
+}
+
+/* ------------------------------
+   Custom Fonts
+------------------------------ */
+.font-space {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.font-manrope {
+  font-family: 'Manrope', sans-serif;
+}
+
+/* ------------------------------
+   Glass UI (Reusable)
+------------------------------ */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ------------------------------
+   Gradient Styles
+------------------------------ */
+.primary-gradient {
+  background: linear-gradient(135deg, #6C63FF 0%, #3B82F6 100%);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #c4c0ff 0%, #adc6ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ------------------------------
+   Glow Effects
+------------------------------ */
+.glow-border {
+  transition: all 0.3s ease;
+}
+
+.glow-border:hover {
+  box-shadow: 0 0 20px rgba(108, 99, 255, 0.2);
+  border-color: rgba(108, 99, 255, 0.4);
+}
+
+/* ------------------------------
+   Scrollbar (Modern UI)
+------------------------------ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #13121b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #6C63FF, #3B82F6);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7B73FF, #4B92F6);
+}
+
+/* ------------------------------
+   Smooth Scroll
+------------------------------ */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ------------------------------
+   Animations
+------------------------------ */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
