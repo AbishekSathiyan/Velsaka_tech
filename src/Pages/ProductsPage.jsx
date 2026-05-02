@@ -66,13 +66,27 @@ const ProductsPage = () => {
     setIsSubmitting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const res = await fetch("http://localhost:5000/api/waitlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Something went wrong");
+      }
+
       setNotified(true);
       setEmail("");
       setEmailError("");
+
       setTimeout(() => setNotified(false), 3000);
     } catch (error) {
-      setEmailError("Something went wrong. Please try again.");
+      setEmailError(error.message || "Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

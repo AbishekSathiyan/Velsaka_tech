@@ -12,16 +12,21 @@ const About = () => {
       name: "Abishek Sathiyan",
       role: "Founder, Chief Architect, Designer & Developer",
       img: FounderImg,
+      active: true
     },
     {
-      name: "Sarah Chen",
-      role: "Head of AI Engineering",
-      img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=688&q=80",
+      name: "Position Open",
+      role: "AI Developer Intern",
+      img: null,
+      active: false,
+      status: "Coming Soon"
     },
     {
-      name: "Marcus Thorne",
-      role: "VP of Solutions",
-      img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80",
+      name: "Position Open",
+      role: "Machine Learning Engineer Intern",
+      img: null,
+      active: false,
+      status: "Coming Soon"
     },
   ];
 
@@ -196,13 +201,29 @@ const About = () => {
               {team.map((member) => (
                 <div key={member.name} className="group">
                   <div className="aspect-[4/5] rounded-xl overflow-hidden mb-4 relative bg-white/5">
-                    <img
-                      src={member.img}
-                      alt={member.name}
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500"
-                    />
+                    {member.active ? (
+                      <img
+                        src={member.img}
+                        alt={member.name}
+                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-500/10 to-purple-500/10">
+                        <div className="text-center">
+                          <span className="material-symbols-outlined text-6xl text-indigo-400 mb-4">
+                            hourglass_empty
+                          </span>
+                          <p className="text-indigo-400 font-semibold text-lg">
+                            {member.status}
+                          </p>
+                          <p className="text-gray-500 text-sm mt-2">
+                            Position Opening Soon
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
-                    {member.role.includes("Founder") && (
+                    {member.active && member.role.includes("Founder") && (
                       <div className="absolute top-2 left-2 bg-gradient-to-r from-[#6C63FF] to-[#3B82F6] text-white text-xs px-2 py-1 rounded">
                         Founder
                       </div>
@@ -211,6 +232,9 @@ const About = () => {
 
                   <h4 className="text-lg font-bold">{member.name}</h4>
                   <p className="text-indigo-400 text-sm">{member.role}</p>
+                  {!member.active && (
+                    <p className="text-gray-500 text-xs mt-1"> Joining Soon</p>
+                  )}
                 </div>
               ))}
             </div>

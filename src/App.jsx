@@ -1,13 +1,15 @@
-import { React, useState } from "react";
+// src/App.jsx ✅
 import "./App.css";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import HomePage from "./Pages/HomePage";
-import AboutPage from "./Pages/AboutPage";
-import ContactPage from "./Pages/ContactPage";
+import { BrowserRouter } from "react-router-dom";
 import AppRouter from "./Routes/AppRouter";
+import AuthProvider from "./auth/AuthContext.jsx";
 
-function App() {
-  return <AppRouter />;
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRouter />
+      </BrowserRouter>
+    </AuthProvider>
+  );
 }
-
-export default App;

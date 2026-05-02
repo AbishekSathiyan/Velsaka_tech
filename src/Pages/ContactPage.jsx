@@ -9,6 +9,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import GitHubIcon from "@mui/icons-material/GitHub";
+import { api } from "../api/client.js"; // Import your API client
 
 const ContactPage = () => {
   const navigate = useNavigate();
@@ -55,42 +56,90 @@ const ContactPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validation
     if (!formData.fullName || !formData.email || !formData.description) {
       showAlert("error", "Missing Information", "Please fill in all required fields.");
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      showAlert("error", "Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+
+    // Phone validation (optional but if provided, validate format)
+    if (formData.phone && !/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/.test(formData.phone)) {
+      showAlert("error", "Invalid Phone", "Please enter a valid phone number.");
       return;
     }
 
     setIsSubmitting(true);
     
     try {
-      const contactData = {
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        service: formData.service,
-        description: formData.description,
-        timestamp: new Date().toISOString(),
-      };
-      
-      console.log("Form submitted:", contactData);
-      localStorage.setItem("lastContact", JSON.stringify(contactData));
-      
-      showAlert(
-        "success", 
-        "Message Sent Successfully", 
-        "Thank you for reaching out! We'll get back to you within 24 hours."
-      );
-      
-      setFormData({
-        fullName: "",
-        email: "",
-        phone: "",
-        service: "Web Development",
-        description: "",
+      // API call to backend
+      const data = await api("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone || "",
+          service: formData.service,
+          message: formData.description, // Map description to message for backend
+          timestamp: new Date().toISOString(),
+        }),
       });
+
+      if (data.success) {
+        // Store in localStorage for backup/offline support
+        const contactHistory = JSON.parse(localStorage.getItem("contactHistory") || "[]");
+        contactHistory.push({
+          ...formData,
+          submittedAt: new Date().toISOString(),
+          status: "success",
+          responseId: data.id || data._id
+        });
+        localStorage.setItem("contactHistory", JSON.stringify(contactHistory));
+        
+        showAlert(
+          "success", 
+          "Message Sent Successfully", 
+          data.message || "Thank you for reaching out! We'll get back to you within 24 hours."
+        );
+        
+        // Reset form
+        setFormData({
+          fullName: "",
+          email: "",
+          phone: "",
+          service: "Web Development",
+          description: "",
+        });
+      } else {
+        throw new Error(data.message || "Failed to send message");
+      }
       
     } catch (error) {
-      showAlert("error", "Something Went Wrong", "Please try again. We're here to help!");
+      console.error("Contact form error:", error);
+      
+      // Store failed submission for retry
+      const failedSubmissions = JSON.parse(localStorage.getItem("failedSubmissions") || "[]");
+      failedSubmissions.push({
+        ...formData,
+        attemptedAt: new Date().toISOString(),
+        error: error.message
+      });
+      localStorage.setItem("failedSubmissions", JSON.stringify(failedSubmissions));
+      
+      showAlert(
+        "error", 
+        "Something Went Wrong", 
+        error.message || "Unable to send your message. Please try again or contact us directly."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -187,7 +236,7 @@ const ContactPage = () => {
           </p>
         </header>
 
-        {/* High Contrast Sweet Alert Popup */}
+        {/* Alert Popup */}
         {alert.show && (
           <>
             <div 
@@ -197,12 +246,12 @@ const ContactPage = () => {
             
             <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
               <div className={`max-w-md w-full ${alert.show ? 'animate-bounce-in' : ''}`}>
-                {/* High Contrast Success Popup */}
+                {/* Success Popup */}
                 {alert.type === 'success' && (
                   <div className="bg-gradient-to-br from-green-600 to-green-800 rounded-2xl p-8 text-center shadow-2xl border-2 border-green-300">
                     <div className="mb-4">
                       <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center animate-float shadow-lg">
-                        <span className="material-symbols-outlined text-green-600 text-7xl">check_circle</span>
+                        <span className="material-symbols-outlined text-green-600 text-7xl">✓</span>
                       </div>
                     </div>
                     
@@ -229,12 +278,12 @@ const ContactPage = () => {
                   </div>
                 )}
                 
-                {/* High Contrast Error Popup */}
+                {/* Error Popup */}
                 {alert.type === 'error' && (
                   <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-2xl p-8 text-center shadow-2xl border-2 border-red-300">
                     <div className="mb-4">
                       <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center animate-shake shadow-lg">
-                        <span className="material-symbols-outlined text-red-600 text-7xl">error</span>
+                        <span className="material-symbols-outlined text-red-600 text-7xl">!</span>
                       </div>
                     </div>
                     
@@ -326,6 +375,10 @@ const ContactPage = () => {
                     <option>AI Chatbot</option>
                     <option>ATS System</option>
                     <option>UI/UX Design</option>
+                    <option>Cloud Solutions</option>
+                    <option>DevOps Services</option>
+                    <option>Job Enquiry</option>
+
                   </select>
                 </div>
               </div>
@@ -364,7 +417,7 @@ const ContactPage = () => {
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-base">send</span>
+                    <span className="material-symbols-outlined text-base">→</span>
                     Send Message
                   </span>
                 )}
@@ -541,3 +594,111 @@ const ContactPage = () => {
 };
 
 export default ContactPage;
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  // Validation
+  if (!formData.fullName || !formData.email || !formData.description) {
+    showAlert("error", "Missing Information", "Please fill in all required fields.");
+    return;
+  }
+
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(formData.email)) {
+    showAlert("error", "Invalid Email", "Please enter a valid email address.");
+    return;
+  }
+
+  setIsSubmitting(true);
+  
+  try {
+    // Try to send to backend
+    const data = await api("/api/contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone || "",
+        service: formData.service,
+        message: formData.description,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+
+    if (data.success) {
+      // Store in localStorage
+      saveToLocalStorage(data);
+      showSuccessAlert(data.message);
+      resetForm();
+    } else {
+      throw new Error(data.message || "Failed to send message");
+    }
+    
+  } catch (error) {
+    console.error("Contact form error:", error);
+    
+    // Fallback: Store locally if backend is not available
+    if (error.message.includes("404")) {
+      // Save to localStorage as fallback
+      const offlineData = {
+        ...formData,
+        submittedAt: new Date().toISOString(),
+        status: "pending",
+        id: `offline_${Date.now()}`
+      };
+      
+      const pendingSubmissions = JSON.parse(localStorage.getItem("pendingContactSubmissions") || "[]");
+      pendingSubmissions.push(offlineData);
+      localStorage.setItem("pendingContactSubmissions", JSON.stringify(pendingSubmissions));
+      
+      showAlert(
+        "success", 
+        "Message Saved Locally", 
+        "Our backend is being configured. Your message has been saved and will be sent when the system is ready. We'll contact you soon!"
+      );
+      resetForm();
+    } else {
+      showAlert(
+        "error", 
+        "Something Went Wrong", 
+        error.message || "Unable to send your message. Please try again or contact us directly at abishek.sathiyan.2002@gmail.com"
+      );
+    }
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+const saveToLocalStorage = (data) => {
+  const contactHistory = JSON.parse(localStorage.getItem("contactHistory") || "[]");
+  contactHistory.push({
+    ...formData,
+    submittedAt: new Date().toISOString(),
+    status: "success",
+    responseId: data.id || data._id
+  });
+  localStorage.setItem("contactHistory", JSON.stringify(contactHistory));
+};
+
+const showSuccessAlert = (message) => {
+  showAlert(
+    "success", 
+    "Message Sent Successfully", 
+    message || "Thank you for reaching out! We'll get back to you within 24 hours."
+  );
+};
+
+const resetForm = () => {
+  setFormData({
+    fullName: "",
+    email: "",
+    phone: "",
+    service: "Web Development",
+    description: "",
+  });
+};
