@@ -3,6 +3,74 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
 
+// API Configuration - Using Vite environment variables
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://your-api-domain.com';
+const WAITLIST_ENDPOINT = `${API_BASE_URL}/api/waitlist`;
+
+// Utility functions
+const validateEmail = (email) => {
+  const emailRegex = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/;
+  if (!email) return "Email is required";
+  if (email.length > 254) return "Email is too long";
+  if (!emailRegex.test(email)) return "Please enter a valid email address";
+  return "";
+};
+
+// Retry logic with exponential backoff
+const fetchWithRetry = async (url, options, maxRetries = 3) => {
+  let lastError;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok || response.status !== 429) {
+        return response;
+      }
+      
+      // Rate limited - wait with exponential backoff
+      const delay = Math.pow(2, i) * 1000;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    } catch (error) {
+      lastError = error;
+      if (i === maxRetries - 1) throw lastError;
+      
+      const delay = Math.pow(2, i) * 1000;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw lastError;
+};
+
+// Rate limiter for client-side
+class RateLimiter {
+  constructor(minInterval = 1000) {
+    this.lastRequestTime = 0;
+    this.minInterval = minInterval;
+  }
+  
+  async throttle() {
+    const now = Date.now();
+    const timeSinceLastRequest = now - this.lastRequestTime;
+    if (timeSinceLastRequest < this.minInterval) {
+      await new Promise(resolve => 
+        setTimeout(resolve, this.minInterval - timeSinceLastRequest)
+      );
+    }
+    this.lastRequestTime = Date.now();
+  }
+}
+
+const rateLimiter = new RateLimiter();
+
 const ProductsPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -13,6 +81,7 @@ const ProductsPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const waitlistRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   // Escape key handler for modal
   useEffect(() => {
@@ -25,6 +94,15 @@ const ProductsPage = () => {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [showModal]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   const scrollToWaitlist = () => {
     waitlistRef.current?.scrollIntoView({
       behavior: "smooth",
@@ -33,19 +111,10 @@ const ProductsPage = () => {
   };
 
   const handleModalGetNotified = () => {
-    // First close the modal
     closeModal();
-    // Then scroll to email input after a small delay to ensure modal is closed
     setTimeout(() => {
       scrollToWaitlist();
     }, 300);
-  };
-
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/;
-    if (!email) return "Email is required";
-    if (!emailRegex.test(email)) return "Please enter a valid email address";
-    return "";
   };
 
   const handleEmailChange = (e) => {
@@ -57,38 +126,128 @@ const ProductsPage = () => {
   };
 
   const handleNotify = async () => {
+    // Validate email
     const error = validateEmail(email);
     if (error) {
       setEmailError(error);
       return;
     }
 
+    // Cancel any ongoing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
     setIsSubmitting(true);
+    
+    // Apply rate limiting
+    await rateLimiter.throttle();
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
     try {
-      const res = await fetch("http://localhost:5000/api/waitlist", {
+      const requestOptions = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
-        body: JSON.stringify({ email }),
-      });
+        body: JSON.stringify({ 
+          email: trimmedEmail,
+          timestamp: new Date().toISOString(),
+          source: window.location.origin
+        }),
+        signal: abortController.signal
+      };
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Something went wrong");
+      const res = await fetchWithRetry(WAITLIST_ENDPOINT, requestOptions);
+      
+      let responseData = {};
+      try {
+        responseData = await res.json();
+      } catch (e) {
+        // Handle non-JSON response
+        if (!res.ok) {
+          throw new Error(`Request failed with status ${res.status}`);
+        }
       }
 
+      if (!res.ok) {
+        let errorMessage = "Something went wrong. Please try again.";
+        
+        switch (res.status) {
+          case 400:
+            errorMessage = responseData.message || "Invalid request. Please check your email.";
+            break;
+          case 409:
+            errorMessage = "This email is already on our waitlist!";
+            break;
+          case 429:
+            errorMessage = "Too many requests. Please try again in a few minutes.";
+            break;
+          case 500:
+            errorMessage = "Server error. Our team has been notified.";
+            console.error("Server error:", { status: res.status, email: trimmedEmail });
+            break;
+          default:
+            errorMessage = responseData.message || `Error: ${res.status}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // Success
       setNotified(true);
       setEmail("");
       setEmailError("");
 
       setTimeout(() => setNotified(false), 3000);
+      
+      // Store in localStorage to prevent duplicate notifications
+      try {
+        const notifiedEmails = JSON.parse(localStorage.getItem('notified_emails') || '[]');
+        if (!notifiedEmails.includes(trimmedEmail)) {
+          notifiedEmails.push(trimmedEmail);
+          localStorage.setItem('notified_emails', JSON.stringify(notifiedEmails));
+        }
+      } catch (e) {
+        // Silently fail localStorage
+      }
+      
     } catch (error) {
-      setEmailError(error.message || "Something went wrong. Please try again.");
+      // Handle different error types
+      if (error.name === 'AbortError') {
+        console.log("Request aborted");
+        return;
+      }
+      
+      let userMessage = "Something went wrong. Please try again.";
+      
+      if (error.message.includes("fetch") || error.message.includes("network")) {
+        userMessage = "Network error. Please check your connection.";
+      } else if (error.message.includes("timeout")) {
+        userMessage = "Request timed out. Please try again.";
+      } else if (error.message.includes("Failed to fetch")) {
+        userMessage = "Unable to connect to server. Please try again later.";
+      } else {
+        userMessage = error.message || userMessage;
+      }
+      
+      setEmailError(userMessage);
+      
+      // Log to monitoring service in production
+      if (import.meta.env.PROD) {
+        console.error("Waitlist API Error:", {
+          message: error.message,
+          email: trimmedEmail,
+          timestamp: new Date().toISOString()
+        });
+      }
     } finally {
       setIsSubmitting(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -186,7 +345,7 @@ const ProductsPage = () => {
             <div className="flex justify-center gap-4 flex-wrap">
               <button
                 onClick={scrollToWaitlist}
-                className="bg-gradient-to-r from-[#6C63FF] to-[#3B82F6] text-white px-8 sm:px-10 py-3 rounded-full font-semibold hover:shadow-[0_0_30px_rgba(108,99,255,0.4)] transition-all duration-300 active:scale-95"
+                className="bg-gradient-to-r from-[#6C63FF] to-[#3B82F6] text-white px-8 sm:px-10 py-3 rounded-full font-semibold hover:shadow-[0_0_30px_rgba(108,63,255,0.4)] transition-all duration-300 active:scale-95"
               >
                 Get Notified
               </button>
@@ -206,7 +365,7 @@ const ProductsPage = () => {
             {products.map((product, idx) => (
               <div
                 key={idx}
-                className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 lg:p-8 rounded-xl hover:shadow-[0_0_25px_rgba(108,99,255,0.3)] hover:-translate-y-1 transition-all duration-300 flex flex-col"
+                className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 lg:p-8 rounded-xl hover:shadow-[0_0_25px_rgba(108,63,255,0.3)] hover:-translate-y-1 transition-all duration-300 flex flex-col"
               >
                 <div className="w-14 h-14 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-5">
                   <span className="material-symbols-outlined text-3xl">
@@ -272,11 +431,12 @@ const ProductsPage = () => {
                       onChange={handleEmailChange}
                       onBlur={() => setEmailError(validateEmail(email))}
                       placeholder="Enter your email address"
+                      disabled={isSubmitting}
                       className={`w-full px-6 py-3 bg-white/5 border rounded-xl text-white placeholder:text-[#c7c4d8]/50 focus:outline-none focus:border-indigo-500/50 transition-all duration-300 ${
                         emailError
                           ? "border-red-500/50 focus:border-red-500"
                           : "border-white/10 focus:border-indigo-500/50"
-                      }`}
+                      } ${isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
                     />
                     {emailError && (
                       <p className="text-red-400 text-xs mt-1 text-left">
@@ -290,7 +450,7 @@ const ProductsPage = () => {
                     className={`bg-gradient-to-r from-[#6C63FF] to-[#3B82F6] text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 whitespace-nowrap ${
                       isSubmitting
                         ? "opacity-50 cursor-not-allowed"
-                        : "hover:shadow-[0_0_30px_rgba(108,99,255,0.4)] active:scale-95"
+                        : "hover:shadow-[0_0_30px_rgba(108,63,255,0.4)] active:scale-95"
                     }`}
                   >
                     {isSubmitting ? (
@@ -333,7 +493,7 @@ const ProductsPage = () => {
           />
 
           <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-[#0B1120] border border-white/10 rounded-xl max-w-3xl w-full relative animate-in slide-in-from-bottom-10 duration-300 shadow-[0_0_50px_rgba(108,99,255,0.2)]">
+            <div className="bg-[#0B1120] border border-white/10 rounded-xl max-w-3xl w-full relative animate-in slide-in-from-bottom-10 duration-300 shadow-[0_0_50px_rgba(108,63,255,0.2)]">
               <button
                 onClick={closeModal}
                 className="absolute top-4 right-4 w-10 h-10 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all duration-300 flex items-center justify-center z-10"
@@ -409,7 +569,7 @@ const ProductsPage = () => {
                     </button>
                     <button
                       onClick={() => navigate("/contact")}
-                      className="px-4 py-2 bg-gradient-to-r from-[#6C63FF] to-[#3B82F6] text-white rounded-lg font-semibold hover:shadow-[0_0_20px_rgba(108,99,255,0.4)] transition-all duration-300 text-sm"
+                      className="px-4 py-2 bg-gradient-to-r from-[#6C63FF] to-[#3B82F6] text-white rounded-lg font-semibold hover:shadow-[0_0_20px_rgba(108,63,255,0.4)] transition-all duration-300 text-sm"
                     >
                       Contact Sales
                     </button>

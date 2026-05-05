@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -9,7 +9,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import GitHubIcon from "@mui/icons-material/GitHub";
-import { api } from "../api/client.js"; // Import your API client
+import { api } from "../api/client.js";
 
 const ContactPage = () => {
   const navigate = useNavigate();
@@ -29,6 +29,8 @@ const ContactPage = () => {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
+  const submitTimeoutRef = useRef(null);
 
   const handleChange = (e) => {
     setFormData({
@@ -53,8 +55,46 @@ const ContactPage = () => {
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      fullName: "",
+      email: "",
+      phone: "",
+      service: "Web Development",
+      description: "",
+    });
+  };
+
+  const saveToLocalStorage = (data) => {
+    const contactHistory = JSON.parse(localStorage.getItem("contactHistory") || "[]");
+    contactHistory.push({
+      ...formData,
+      submittedAt: new Date().toISOString(),
+      status: "success",
+      responseId: data.id || data._id
+    });
+    // Keep only last 50 submissions
+    if (contactHistory.length > 50) contactHistory.shift();
+    localStorage.setItem("contactHistory", JSON.stringify(contactHistory));
+  };
+
+  const showSuccessAlert = (message) => {
+    showAlert(
+      "success", 
+      "Message Sent Successfully", 
+      message || "Thank you for reaching out! Our team will contact you within 24 hours."
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Prevent duplicate submissions within 10 seconds
+    const now = Date.now();
+    if (now - lastSubmitTime < 10000) {
+      showAlert("error", "Please Wait", "You have already submitted a message. Please wait 10 seconds before sending another.");
+      return;
+    }
     
     // Validation
     if (!formData.fullName || !formData.email || !formData.description) {
@@ -70,12 +110,21 @@ const ContactPage = () => {
     }
 
     // Phone validation (optional but if provided, validate format)
-    if (formData.phone && !/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/.test(formData.phone)) {
-      showAlert("error", "Invalid Phone", "Please enter a valid phone number.");
-      return;
+    if (formData.phone && formData.phone.trim() !== "") {
+      const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/;
+      if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
+        showAlert("error", "Invalid Phone", "Please enter a valid phone number.");
+        return;
+      }
     }
 
     setIsSubmitting(true);
+    setLastSubmitTime(now);
+    
+    // Clear any existing timeout
+    if (submitTimeoutRef.current) {
+      clearTimeout(submitTimeoutRef.current);
+    }
     
     try {
       // API call to backend
@@ -85,40 +134,19 @@ const ContactPage = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          fullName: formData.fullName,
-          email: formData.email,
-          phone: formData.phone || "",
+          fullName: formData.fullName.trim(),
+          email: formData.email.trim().toLowerCase(),
+          phone: formData.phone?.trim() || "",
           service: formData.service,
-          message: formData.description, // Map description to message for backend
+          message: formData.description.trim(),
           timestamp: new Date().toISOString(),
         }),
       });
 
       if (data.success) {
-        // Store in localStorage for backup/offline support
-        const contactHistory = JSON.parse(localStorage.getItem("contactHistory") || "[]");
-        contactHistory.push({
-          ...formData,
-          submittedAt: new Date().toISOString(),
-          status: "success",
-          responseId: data.id || data._id
-        });
-        localStorage.setItem("contactHistory", JSON.stringify(contactHistory));
-        
-        showAlert(
-          "success", 
-          "Message Sent Successfully", 
-          data.message || "Thank you for reaching out! We'll get back to you within 24 hours."
-        );
-        
-        // Reset form
-        setFormData({
-          fullName: "",
-          email: "",
-          phone: "",
-          service: "Web Development",
-          description: "",
-        });
+        saveToLocalStorage(data);
+        showSuccessAlert(data.message);
+        resetForm();
       } else {
         throw new Error(data.message || "Failed to send message");
       }
@@ -126,22 +154,83 @@ const ContactPage = () => {
     } catch (error) {
       console.error("Contact form error:", error);
       
-      // Store failed submission for retry
-      const failedSubmissions = JSON.parse(localStorage.getItem("failedSubmissions") || "[]");
-      failedSubmissions.push({
-        ...formData,
-        attemptedAt: new Date().toISOString(),
-        error: error.message
-      });
-      localStorage.setItem("failedSubmissions", JSON.stringify(failedSubmissions));
-      
-      showAlert(
-        "error", 
-        "Something Went Wrong", 
-        error.message || "Unable to send your message. Please try again or contact us directly."
-      );
+      // Handle duplicate key error (email already exists in recent submissions)
+      if (error.message?.includes("duplicate") || error.message?.includes("already exists")) {
+        showAlert(
+          "error", 
+          "Already Submitted", 
+          "You have already submitted a message recently. Our team will contact you soon!"
+        );
+      } else if (error.message?.includes("429")) {
+        showAlert(
+          "error", 
+          "Too Many Requests", 
+          "Please wait a moment before sending another message."
+        );
+      } else if (error.message.includes("404")) {
+        // Save to localStorage as fallback
+        const offlineData = {
+          ...formData,
+          submittedAt: new Date().toISOString(),
+          status: "pending",
+          id: `offline_${Date.now()}`
+        };
+        
+        const pendingSubmissions = JSON.parse(localStorage.getItem("pendingContactSubmissions") || "[]");
+        pendingSubmissions.push(offlineData);
+        // Keep only last 20 pending submissions
+        if (pendingSubmissions.length > 20) pendingSubmissions.shift();
+        localStorage.setItem("pendingContactSubmissions", JSON.stringify(pendingSubmissions));
+        
+        showAlert(
+          "success", 
+          "Message Saved", 
+          "Your message has been saved. Our team will review it and contact you shortly."
+        );
+        resetForm();
+      } else if (error.message?.includes("400")) {
+        showAlert(
+          "error", 
+          "Invalid Input", 
+          error.message || "Please check your information and try again."
+        );
+      } else if (error.message?.includes("401") || error.message?.includes("403")) {
+        showAlert(
+          "error", 
+          "Session Expired", 
+          "Please refresh the page and try again."
+        );
+      } else if (!navigator.onLine) {
+        // Offline case
+        const offlineData = {
+          ...formData,
+          submittedAt: new Date().toISOString(),
+          status: "offline",
+          id: `offline_${Date.now()}`
+        };
+        
+        const pendingSubmissions = JSON.parse(localStorage.getItem("pendingContactSubmissions") || "[]");
+        pendingSubmissions.push(offlineData);
+        localStorage.setItem("pendingContactSubmissions", JSON.stringify(pendingSubmissions));
+        
+        showAlert(
+          "info", 
+          "You're Offline", 
+          "Your message has been saved locally and will be sent when you're back online."
+        );
+        resetForm();
+      } else {
+        showAlert(
+          "error", 
+          "Something Went Wrong", 
+          "Unable to send your message. Please try again or contact us directly at abishek.sathiyan.2002@gmail.com"
+        );
+      }
     } finally {
-      setIsSubmitting(false);
+      // Set timeout to allow re-submission after 10 seconds
+      submitTimeoutRef.current = setTimeout(() => {
+        setIsSubmitting(false);
+      }, 10000);
     }
   };
 
@@ -264,7 +353,7 @@ const ContactPage = () => {
                     </p>
                     
                     <p className="text-green-200 text-sm mb-4">
-                      Click Continue to return home
+                      Our team will contact you soon
                     </p>
                     
                     <div className="flex gap-3 justify-center">
@@ -301,6 +390,34 @@ const ContactPage = () => {
                         className="px-8 py-3 bg-white text-red-700 rounded-xl font-bold hover:bg-red-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
                         Try Again
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Info Popup for offline mode */}
+                {alert.type === 'info' && (
+                  <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-8 text-center shadow-2xl border-2 border-blue-300">
+                    <div className="mb-4">
+                      <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center animate-float shadow-lg">
+                        <span className="material-symbols-outlined text-blue-600 text-7xl">cloud_off</span>
+                      </div>
+                    </div>
+                    
+                    <h3 className="text-3xl font-bold mb-3 text-white font-['Space_Grotesk']">
+                      {alert.title}
+                    </h3>
+                    
+                    <p className="text-blue-100 mb-6 leading-relaxed text-base font-medium">
+                      {alert.message}
+                    </p>
+                    
+                    <div className="flex gap-3 justify-center">
+                      <button
+                        onClick={closeAlert}
+                        className="px-8 py-3 bg-white text-blue-700 rounded-xl font-bold hover:bg-blue-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                      >
+                        Got it
                       </button>
                     </div>
                   </div>
@@ -378,24 +495,26 @@ const ContactPage = () => {
                     <option>Cloud Solutions</option>
                     <option>DevOps Services</option>
                     <option>Job Enquiry</option>
-
                   </select>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Project Description <span className="text-red-400">*</span>
+                  Message <span className="text-red-400">*</span>
                 </label>
                 <textarea
                   className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all placeholder:text-slate-500 resize-none"
-                  placeholder="Tell us more about your vision..."
+                  placeholder="Tell us more about your vision, requirements, or questions..."
                   rows="5"
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
                   required
                 />
+                <p className="text-xs text-slate-500 mt-1">
+                  {formData.description.length}/1000 characters
+                </p>
               </div>
 
               <button
@@ -417,15 +536,19 @@ const ContactPage = () => {
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-base">→</span>
+                    <span className="material-symbols-outlined text-base">send</span>
                     Send Message
                   </span>
                 )}
               </button>
+
+              <p className="text-xs text-slate-500 text-center mt-4">
+                By submitting, you agree to our <a href="/privacy" className="text-indigo-400 hover:underline">Privacy Policy</a>
+              </p>
             </form>
           </div>
 
-          {/* Right Column: Info */}
+          {/* Right Column: Info - Same as before */}
           <div className="lg:col-span-5 flex flex-col gap-6">
             <div className="glass-card rounded-xl p-8 flex-1">
               <div className="flex items-center gap-4 mb-8">
@@ -594,111 +717,3 @@ const ContactPage = () => {
 };
 
 export default ContactPage;
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  // Validation
-  if (!formData.fullName || !formData.email || !formData.description) {
-    showAlert("error", "Missing Information", "Please fill in all required fields.");
-    return;
-  }
-
-  // Email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(formData.email)) {
-    showAlert("error", "Invalid Email", "Please enter a valid email address.");
-    return;
-  }
-
-  setIsSubmitting(true);
-  
-  try {
-    // Try to send to backend
-    const data = await api("/api/contact", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone || "",
-        service: formData.service,
-        message: formData.description,
-        timestamp: new Date().toISOString(),
-      }),
-    });
-
-    if (data.success) {
-      // Store in localStorage
-      saveToLocalStorage(data);
-      showSuccessAlert(data.message);
-      resetForm();
-    } else {
-      throw new Error(data.message || "Failed to send message");
-    }
-    
-  } catch (error) {
-    console.error("Contact form error:", error);
-    
-    // Fallback: Store locally if backend is not available
-    if (error.message.includes("404")) {
-      // Save to localStorage as fallback
-      const offlineData = {
-        ...formData,
-        submittedAt: new Date().toISOString(),
-        status: "pending",
-        id: `offline_${Date.now()}`
-      };
-      
-      const pendingSubmissions = JSON.parse(localStorage.getItem("pendingContactSubmissions") || "[]");
-      pendingSubmissions.push(offlineData);
-      localStorage.setItem("pendingContactSubmissions", JSON.stringify(pendingSubmissions));
-      
-      showAlert(
-        "success", 
-        "Message Saved Locally", 
-        "Our backend is being configured. Your message has been saved and will be sent when the system is ready. We'll contact you soon!"
-      );
-      resetForm();
-    } else {
-      showAlert(
-        "error", 
-        "Something Went Wrong", 
-        error.message || "Unable to send your message. Please try again or contact us directly at abishek.sathiyan.2002@gmail.com"
-      );
-    }
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-const saveToLocalStorage = (data) => {
-  const contactHistory = JSON.parse(localStorage.getItem("contactHistory") || "[]");
-  contactHistory.push({
-    ...formData,
-    submittedAt: new Date().toISOString(),
-    status: "success",
-    responseId: data.id || data._id
-  });
-  localStorage.setItem("contactHistory", JSON.stringify(contactHistory));
-};
-
-const showSuccessAlert = (message) => {
-  showAlert(
-    "success", 
-    "Message Sent Successfully", 
-    message || "Thank you for reaching out! We'll get back to you within 24 hours."
-  );
-};
-
-const resetForm = () => {
-  setFormData({
-    fullName: "",
-    email: "",
-    phone: "",
-    service: "Web Development",
-    description: "",
-  });
-};

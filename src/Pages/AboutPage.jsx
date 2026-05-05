@@ -12,21 +12,21 @@ const About = () => {
       name: "Abishek Sathiyan",
       role: "Founder, Chief Architect, Designer & Developer",
       img: FounderImg,
-      active: true
+      active: true,
     },
     {
       name: "Position Open",
-      role: "AI Developer Intern",
+      role: "AI Developer ",
       img: null,
       active: false,
-      status: "Coming Soon"
+      status: "Coming Soon",
     },
     {
       name: "Position Open",
-      role: "Machine Learning Engineer Intern",
+      role: "Machine Learning Engineer",
       img: null,
       active: false,
-      status: "Coming Soon"
+      status: "Coming Soon",
     },
   ];
 
@@ -59,28 +59,28 @@ const About = () => {
       value: "1",
       suffix: "",
       label: "Enterprise Client",
-      description: "Trusted partner for innovative solutions"
+      description: "Trusted partner for innovative solutions",
     },
     {
       icon: "code",
       value: "15+",
       suffix: "",
       label: "Self Projects",
-      description: "Full-stack applications & AI integrations"
+      description: "Full-stack applications & AI integrations",
     },
     {
       icon: "star",
       value: "5.0",
       suffix: "",
       label: "Client Rating",
-      description: "Based on project deliverables"
+      description: "Based on project deliverables",
     },
     {
       icon: "psychology",
       value: "10+",
       suffix: "",
       label: "Technologies Mastered",
-      description: "MERN, AI, Cloud & more"
+      description: "MERN, AI, Cloud & more",
     },
   ];
 
@@ -251,10 +251,10 @@ const About = () => {
               Real metrics from our development journey and project portfolio
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, idx) => (
-              <div 
+              <div
                 key={idx}
                 className="bg-white/5 border border-white/10 p-6 rounded-xl text-center hover:border-indigo-500/30 hover:shadow-[0_0_20px_rgba(108,99,255,0.1)] transition-all duration-300 group"
               >
@@ -264,14 +264,13 @@ const About = () => {
                   </span>
                 </div>
                 <div className="text-3xl font-bold text-white mb-1">
-                  {stat.value}{stat.suffix}
+                  {stat.value}
+                  {stat.suffix}
                 </div>
                 <div className="text-sm font-semibold text-indigo-400 mb-1">
                   {stat.label}
                 </div>
-                <div className="text-xs text-[#c7c4d8]">
-                  {stat.description}
-                </div>
+                <div className="text-xs text-[#c7c4d8]">{stat.description}</div>
               </div>
             ))}
           </div>
@@ -279,8 +278,11 @@ const About = () => {
           {/* Additional Note */}
           <div className="mt-8 text-center">
             <p className="text-sm text-slate-500 bg-white/5 inline-block px-4 py-2 rounded-full">
-              <span className="material-symbols-outlined text-indigo-400 text-sm align-middle mr-1">info</span>
-              Currently serving 1 enterprise client with 15+ self-initiated projects and growing
+              <span className="material-symbols-outlined text-indigo-400 text-sm align-middle mr-1">
+                info
+              </span>
+              Currently serving 1 enterprise client with 15+ self-initiated
+              projects and growing
             </p>
           </div>
         </section>
@@ -295,13 +297,23 @@ const About = () => {
               Building with modern, scalable tech stack
             </p>
           </div>
-          
+
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
-              "React", "Next.js", "Node.js", "Express", "MongoDB", "Tailwind CSS",
-              "Firebase", "JWT", "Razorpay", "Cloudinary", "OpenAI API", "Vercel"
+              "React",
+              "Next.js",
+              "Node.js",
+              "Express",
+              "MongoDB",
+              "Tailwind CSS",
+              "Firebase",
+              "JWT",
+              "Razorpay",
+              "Cloudinary",
+              "OpenAI API",
+              "Vercel",
             ].map((tech, idx) => (
-              <div 
+              <div
                 key={idx}
                 className="bg-white/5 border border-white/10 p-3 rounded-lg text-center text-sm text-[#e4e1ee] hover:border-indigo-500/30 hover:bg-white/10 transition-all duration-300"
               >
@@ -325,13 +337,13 @@ const About = () => {
               </p>
 
               <div className="flex justify-center gap-4 flex-wrap">
-                <button 
+                <button
                   onClick={() => navigate("/contact")}
                   className="px-6 sm:px-8 py-3 bg-white text-black rounded-xl font-bold hover:bg-gray-100 transition-all duration-300 active:scale-95 cursor-pointer"
                 >
                   Apply Now
                 </button>
-                <button 
+                <button
                   onClick={() => navigate("/contact")}
                   className="px-6 sm:px-8 py-3 border border-white rounded-xl font-bold text-white hover:bg-white/10 transition-all duration-300 cursor-pointer"
                 >

@@ -8,6 +8,8 @@
 body {
   @apply bg-[#0B1120] text-[#e4e1ee] font-body;
   overflow-x: hidden;
+  width: 100%;
+  position: relative;
 }
 
 /* ------------------------------
@@ -22,12 +24,19 @@ body {
 }
 
 /* ------------------------------
-   Glass UI (Reusable)
+   Glass UI (Reusable) - Enhanced responsive
 ------------------------------ */
 .glass-card {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 640px) {
+  .glass-card {
+    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.04);
+  }
 }
 
 /* ------------------------------
@@ -97,4 +106,316 @@ html {
 
 .animate-pulse-slow {
   animation: pulse-slow 3s ease-in-out infinite;
+}
+
+/* ------------------------------
+   Responsive Images & Media
+------------------------------ */
+img, video, iframe, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ------------------------------
+   Responsive Containers
+------------------------------ */
+.container {
+  width: 100%;
+  padding-right: 1rem;
+  padding-left: 1rem;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 640px;
+  }
+}
+@media (min-width: 768px) {
+  .container {
+    max-width: 768px;
+  }
+}
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1280px;
+  }
+}
+@media (min-width: 1440px) {
+  .container {
+    max-width: 1440px;
+  }
+}
+
+/* ------------------------------
+   Responsive Typography
+------------------------------ */
+html {
+  font-size: 16px;
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1600px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+/* ------------------------------
+   Material Icons Responsive
+------------------------------ */
+.material-symbols-outlined {
+  font-size: 20px;
+}
+
+@media (min-width: 640px) {
+  .material-symbols-outlined {
+    font-size: 22px;
+  }
+}
+
+@media (min-width: 768px) {
+  .material-symbols-outlined {
+    font-size: 24px;
+  }
+}
+
+/* ------------------------------
+   Utility Classes for Responsive Spacing
+------------------------------ */
+.responsive-padding {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-padding {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-padding {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-padding {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}
+
+/* ------------------------------
+   Responsive Grid Helper
+------------------------------ */
+.responsive-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+@media (min-width: 640px) {
+  .responsive-grid {
+    gap: 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-grid {
+    gap: 1.5rem;
+  }
+}
+
+/* ------------------------------
+   Touch-friendly targets for mobile
+------------------------------ */
+@media (max-width: 768px) {
+  button, 
+  a,
+  [role="button"],
+  .cursor-pointer {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Adjust for inline buttons */
+  .inline-button {
+    min-height: auto;
+    min-width: auto;
+  }
+}
+
+/* ------------------------------
+   Responsive Animations
+------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ------------------------------
+   Mobile Menu Improvements
+------------------------------ */
+.mobile-menu-overlay {
+  backdrop-filter: blur(4px);
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-active {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* ------------------------------
+   Responsive Border Radius
+------------------------------ */
+.responsive-rounded {
+  border-radius: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .responsive-rounded {
+    border-radius: 0.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-rounded {
+    border-radius: 1rem;
+  }
+}
+
+/* ------------------------------
+   Performance Optimizations
+------------------------------ */
+@media (max-width: 768px) {
+  .hover-scale {
+    transform: none !important;
+  }
+  
+  .hover-translate {
+    transform: none !important;
+  }
+}
+
+/* ------------------------------
+   Safe Area Insets for Notch Devices
+------------------------------ */
+@supports (padding: max(0px)) {
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* ------------------------------
+   Print Styles
+------------------------------ */
+@media print {
+  .glass-card {
+    background: white;
+    border: 1px solid #ddd;
+  }
+  
+  .no-print {
+    display: none;
+  }
+}
+
+
+/* Add to your global CSS for smooth menu animations */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* Mobile menu improvements */
+@media (max-width: 768px) {
+  /* Better touch targets */
+  .mobile-nav-link {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Prevent body scroll when menu is open */
+  body.menu-open {
+    overflow: hidden;
+  }
+}
+
+/* Desktop nav hover effects */
+@media (min-width: 768px) {
+  nav a {
+    position: relative;
+  }
+  
+  nav a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0%;
+    height: 2px;
+    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    transition: width 0.3s ease;
+  }
+  
+  nav a:hover::after {
+    width: 100%;
+  }
+  
+  nav a.active::after {
+    width: 100%;
+  }
 }

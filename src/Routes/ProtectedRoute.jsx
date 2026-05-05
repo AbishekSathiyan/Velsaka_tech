@@ -1,30 +1,17 @@
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../auth/useAuth";
+// src/components/ProtectedRoute.jsx
+import React from "react";
+import { Navigate } from "react-router-dom";
 
-export default function ProtectedRoute({ children }) {
-  const { isAuth, loading } = useAuth();
-  const location = useLocation();
-
-  // ⏳ wait for auth init
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0B1120] text-white">
-        Checking access...
-      </div>
-    );
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem("adminToken");
+  
+  // If no token, redirect to login page
+  if (!token) {
+    return <Navigate to="/admin/login" replace />;
   }
-
-  // ❌ not logged in
-  if (!isAuth) {
-    return (
-      <Navigate
-        to="/admin/login"
-        state={{ from: location }}
-        replace
-      />
-    );
-  }
-
-  // ✅ authorized
+  
+  // If token exists, render the protected component
   return children;
-}
+};
+
+export default ProtectedRoute;

@@ -35,24 +35,24 @@ const Roadmap = () => {
   ];
 
   return (
-    <section className="px-8 max-w-[1440px] mx-auto py-12 md:py-16">
-      <h2 className="text-3xl md:text-4xl font-bold text-white mb-8 font-['Space_Grotesk']">
+    <section className="px-3 sm:px-4 md:px-6 lg:px-8 max-w-[1440px] mx-auto py-8 sm:py-10 md:py-12 lg:py-16 overflow-x-hidden">
+      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-6 sm:mb-7 md:mb-8 font-['Space_Grotesk'] text-center sm:text-left">
         Product Roadmap
       </h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
         {phases.map((phase, index) => (
           <div 
             key={index} 
-            className={`glass-card p-6 rounded-xl border-l-4 transition-all duration-300 cursor-pointer group hover:-translate-y-2 ${
+            className={`glass-card p-4 sm:p-5 md:p-6 rounded-xl border-l-4 transition-all duration-300 cursor-pointer group hover:-translate-y-1 sm:hover:-translate-y-2 ${
               phase.active 
-                ? 'border-l-indigo-500 hover:shadow-[0_0_30px_rgba(108,99,255,0.3)] hover:border-l-indigo-400' 
-                : 'border-l-slate-700 hover:border-l-slate-500 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)]'
+                ? 'border-l-indigo-500 hover:shadow-[0_0_20px_rgba(108,99,255,0.3)] hover:border-l-indigo-400' 
+                : 'border-l-slate-700 hover:border-l-slate-500 hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]'
             }`}
           >
             {/* Phase Badge & Status */}
-            <div className="flex items-center justify-between mb-3">
-              <span className={`font-bold text-xs uppercase tracking-widest ${
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <span className={`font-bold text-[10px] sm:text-xs uppercase tracking-widest ${
                 phase.active ? 'text-indigo-400' : 'text-slate-500'
               }`}>
                 {phase.phase}
@@ -60,32 +60,32 @@ const Roadmap = () => {
               {phase.completed && (
                 <CheckCircleIcon 
                   className="text-green-400"
-                  style={{ fontSize: '18px' }}
+                  style={{ fontSize: '16px' }}
                 />
               )}
             </div>
             
             {/* Title */}
-            <h4 className="font-bold text-white text-xl mb-4 group-hover:text-indigo-300 transition-colors duration-300 font-['Space_Grotesk']">
+            <h4 className="font-bold text-white text-base sm:text-lg md:text-xl mb-3 sm:mb-4 group-hover:text-indigo-300 transition-colors duration-300 font-['Space_Grotesk']">
               {phase.title}
             </h4>
             
             {/* Items List */}
-            <ul className="space-y-2 mb-4">
+            <ul className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
               {phase.items.map((item, idx) => (
                 <li 
                   key={idx} 
-                  className="flex items-center gap-2 text-sm"
+                  className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
                 >
                   <ArrowForwardIcon 
                     className={`${
                       phase.active ? 'text-indigo-400' : 'text-slate-600'
                     } group-hover:translate-x-1 transition-transform duration-300`}
-                    style={{ fontSize: '14px' }}
+                    style={{ fontSize: '12px' }}
                   />
                   <span className={`${
                     phase.active ? 'text-slate-200' : 'text-slate-500'
-                  } group-hover:text-slate-300 transition-colors duration-300`}>
+                  } group-hover:text-slate-300 transition-colors duration-300 text-xs sm:text-sm`}>
                     {item}
                   </span>
                 </li>
@@ -93,7 +93,7 @@ const Roadmap = () => {
             </ul>
             
             {/* Progress Indicator */}
-            <div className="w-full bg-slate-700/50 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-slate-700/50 rounded-full h-1 overflow-hidden">
               <div 
                 className={`h-full rounded-full transition-all duration-500 ${
                   phase.completed 

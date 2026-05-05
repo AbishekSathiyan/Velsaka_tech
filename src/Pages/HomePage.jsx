@@ -11,15 +11,17 @@ import Roadmap from "../components/Roadmap";
 
 const HomePage = () => {
   return (
-    <div>
+    <div className="overflow-x-hidden w-full">
       <Header />
-      <HeroSection />
-      <FeatureCards />
-      <CoreFeatures />
-      <SystemHierarchy />
-      <TechStack />
-      <UserJourney />
-      <Roadmap />
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <HeroSection />
+        <FeatureCards />
+        <CoreFeatures />
+        <SystemHierarchy />
+        <TechStack />
+        <UserJourney />
+        <Roadmap />
+      </main>
       <Footer />
     </div>
   );

@@ -4,67 +4,117 @@ import Logo from "../assets/VelSAKA_Logo.jpeg";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-[700px] md:min-h-[750px] flex items-center px-4 sm:px-8 max-w-[1440px] mx-auto pt-16 md:pt-20 pb-12 md:pb-16">
-      <div className="grid md:grid-cols-2 gap-8 md:gap-12 lg:gap-xxl items-center w-full">
+    <section className="relative min-h-screen flex items-center w-full px-4 sm:px-6 lg:px-8 py-20 overflow-hidden">
 
-        {/* Left Content */}
-        <div className="space-y-6 md:space-y-8">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-[1.1] font-['Space_Grotesk']">
-            Building{" "}
-            <span className="bg-gradient-to-r from-[#c4c0ff] to-[#adc6ff] bg-clip-text text-transparent">
-              Products
-            </span>{" "}
-            That <br />
-            Empower People
-          </h1>
+      <div className="max-w-7xl mx-auto w-full">
+        <div className="grid lg:grid-cols-2 gap-10 items-center">
 
-          <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-xl leading-relaxed">
-            Next-generation technology solutions designed for enterprise
-            excellence.
-          </p>
+          {/* LEFT */}
+          <div className="text-center lg:text-left space-y-6">
 
-          {/* Buttons */}
-          <div className="flex flex-wrap gap-4">
+            {/* Heading */}
+            <h1 className="font-bold text-white leading-tight 
+              text-[clamp(2.5rem,6vw,5rem)] font-['Space_Grotesk']">
+              
+              Building{" "}
+              <span className="bg-gradient-to-r from-indigo-300 to-blue-400 bg-clip-text text-transparent">
+                Products
+              </span>{" "}
+              That Empower People
+            </h1>
 
-            {/* Products */}
-            <Link
-              to="/products"
-              className="bg-gradient-to-r from-indigo-500 to-blue-500 px-6 sm:px-8 py-3 rounded-lg font-bold text-white shadow-[0_0_20px_rgba(108,99,255,0.3)] hover:scale-105 hover:shadow-[0_0_35px_rgba(108,99,255,0.5)] transition-all"
-            >
-              Our Products
-            </Link>
+            {/* Subtext */}
+            <p className="text-slate-300 max-w-xl mx-auto lg:mx-0
+              text-[clamp(0.95rem,1.2vw,1.2rem)] leading-relaxed">
+              
+              Next-generation technology solutions designed for enterprise
+              excellence. Built for scale, performance, and innovation.
+            </p>
 
-            {/* About */}
-            <Link
-              to="/about"
-              className="glass-card px-6 sm:px-8 py-3 rounded-lg font-bold text-white border border-white/20 hover:bg-white/10 hover:border-white/40 transition-all"
-            >
-              About Us
-            </Link>
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
 
-          </div>
-        </div>
+              <Link
+                to="/products"
+                className="bg-gradient-to-r from-indigo-500 to-blue-500 
+                px-6 py-3 rounded-lg font-semibold text-white
+                hover:scale-105 transition-all duration-300 shadow-lg"
+              >
+                Our Products
+              </Link>
 
-        {/* Right Content */}
-        <div className="relative flex justify-center items-center mt-8 md:mt-0">
-          <div className="w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] md:w-[500px] md:h-[500px] bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full blur-[120px] opacity-30 absolute animate-pulse"></div>
-
-          <div className="relative w-[280px] h-[280px] sm:w-[350px] sm:h-[350px] md:w-[450px] md:h-[450px] rounded-full glass-card flex items-center justify-center border border-white/20 shadow-[0_0_80px_rgba(59,130,246,0.4)]">
-            <div className="w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] md:w-96 md:h-96 rounded-full border border-indigo-500/40 animate-pulse flex items-center justify-center">
-
-              <div className="bg-white/10 backdrop-blur-sm rounded-full p-4 sm:p-6 md:p-8 border border-white/20 shadow-[0_0_40px_rgba(108,99,255,0.3)]">
-                <img
-                  src={Logo}
-                  alt="VELSAKA TECH Logo"
-                  className="w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 object-contain rounded-full hover:scale-105 transition-transform duration-700"
-                />
-              </div>
+              <Link
+                to="/about"
+                className="border border-white/20 px-6 py-3 rounded-lg 
+                text-white hover:bg-white/10 transition-all duration-300"
+              >
+                About Us
+              </Link>
 
             </div>
           </div>
-        </div>
 
+          {/* RIGHT - Circle size same, only logo larger */}
+          <div className="flex justify-center">
+
+            <div className="relative w-[min(80vw,400px)] aspect-square">
+
+              {/* Glow */}
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-blue-500 
+                rounded-full blur-3xl opacity-30 animate-pulse"></div>
+
+              {/* Circle - Same size */}
+              <div className="relative w-full h-full rounded-full 
+                flex items-center justify-center
+                border border-white/20 backdrop-blur-md">
+
+                {/* Rotating Border */}
+                <div className="absolute inset-0 rounded-full border-2 
+                  border-transparent border-t-indigo-500 border-r-blue-500 
+                  animate-spin-slow"></div>
+
+                {/* Inner Circle - Same size */}
+                <div className="w-[70%] h-[70%] rounded-full flex items-center justify-center 
+                  border border-indigo-400/40 bg-indigo-500/10">
+
+                  {/* Logo Container - Larger padding, but circle same */}
+                  <div className="p-3 rounded-full bg-white/10 backdrop-blur">
+                    <img
+                      src={Logo}
+                      alt="VELSAKA TECH Logo"
+                      className="w-32 sm:w-40 md:w-48 lg:w-56 object-contain rounded-full 
+                        hover:scale-110 transition-transform duration-700"
+                    />
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Particles */}
+              <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-indigo-400 rounded-full animate-ping"></div>
+              <div className="absolute bottom-1/4 right-1/4 w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
+
+            </div>
+
+          </div>
+
+        </div>
       </div>
+
+      <style jsx>{`
+        @keyframes spin-slow {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        .animate-spin-slow {
+          animation: spin-slow 8s linear infinite;
+        }
+      `}</style>
     </section>
   );
 };

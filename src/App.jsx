@@ -1,15 +1,9 @@
-// src/App.jsx ✅
-import "./App.css";
-import { BrowserRouter } from "react-router-dom";
+// src/App.jsx
+import React from "react";
 import AppRouter from "./Routes/AppRouter";
-import AuthProvider from "./auth/AuthContext.jsx";
 
-export default function App() {
-  return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRouter />
-      </BrowserRouter>
-    </AuthProvider>
-  );
+function App() {
+  return <AppRouter />;
 }
+
+export default App;

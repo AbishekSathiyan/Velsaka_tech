@@ -1,44 +1,72 @@
-import { Routes, Route } from "react-router-dom";
+// src/AppRouter.jsx
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import HomePage from "../Pages/HomePage";
-import AboutPage from "../Pages/AboutPage";
-import ProductsPage from "../Pages/ProductsPage";
-import ServicesPage from "../Pages/ServicesPage";
-import PricingPage from "../Pages/PricingPage";
-import ContactPage from "../Pages/ContactPage";
-import NotFoundPage from "../Pages/NotFound";
+import ProtectedRoute from "../Routes/ProtectedRoute";
 
-import AdminWaitlist from "../Pages/AdminWaitList";
-import AdminLogin from "../Pages/AdminLogin";
-import ProtectedRoute from "../components/ProtectedRoute";
+/* =========================
+   PUBLIC PAGES
+========================= */
+import Home from "../Pages/HomePage";
+import About from "../Pages/AboutPage";
+import Services from "../Pages/ServicesPage";
+import Contact from "../Pages/ContactPage";
+import Products from "../Pages/ProductsPage";
+//import Careers from "../Pages/CareersPage"; // ✅ FIXED
+import NotFound from "../Pages/NotFound";
+
+/* =========================
+   ADMIN PAGES
+========================= */
+import AdminLogin from "../pages/AdminLogin";
+import AdminPage from "../pages/AdminPage";
 
 const AppRouter = () => {
   return (
-    <Routes>
-      {/* 🌐 Public Routes */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/about" element={<AboutPage />} />
-      <Route path="/services" element={<ServicesPage />} />
-      <Route path="/pricing" element={<PricingPage />} />
-      <Route path="/contact" element={<ContactPage />} />
-      <Route path="/products" element={<ProductsPage />} />
+    <BrowserRouter>
+      <Routes>
+        {/* =========================
+            PUBLIC ROUTES
+        ========================= */}
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/careers" element={<NotFound />} />
 
-      {/* 🔐 Admin Auth */}
-      <Route path="/admin/login" element={<AdminLogin />} />
+        {/* =========================
+            ADMIN ROUTES
+        ========================= */}
 
-      {/* 🔒 Protected Admin Route */}
-      <Route
-        path="/admin/waitlist"
-        element={
-          <ProtectedRoute>
-            <AdminWaitlist />
-          </ProtectedRoute>
-        }
-      />
+        {/* Login */}
+        <Route path="/admin/login" element={<AdminLogin />} />
 
-      {/* ❌ 404 */}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        {/* Protected Dashboard */}
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Redirect /admin → dashboard */}
+        <Route
+          path="/admin"
+          element={<Navigate to="/admin/dashboard" replace />}
+        />
+
+        {/* =========================
+            404 PAGE
+        ========================= */}
+        <Route path="/404" element={<NotFound />} />
+
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/404" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 
