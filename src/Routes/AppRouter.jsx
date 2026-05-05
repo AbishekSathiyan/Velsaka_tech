@@ -18,8 +18,8 @@ import NotFound from "../Pages/NotFound";
 /* =========================
    ADMIN PAGES
 ========================= */
-import AdminLogin from "../pages/AdminLogin";
-import AdminPage from "../pages/AdminPage";
+import AdminLogin from "../Pages/AdminLogin";
+import AdminPage from "../Pages/AdminPage";
 
 const AppRouter = () => {
   return (
