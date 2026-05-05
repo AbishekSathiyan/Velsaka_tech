@@ -1,39 +1,50 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 
-export default defineConfig({
-  plugins: [
-    react(),
-    babel({
-      presets: [reactCompilerPreset()],
-    }),
-  ],
+export default defineConfig(({ mode }) => {
+  // ✅ Load env safely
+  const env = loadEnv(mode, process.cwd(), "");
 
-  server: {
-    port: 5173,
-    proxy: {
-      "/api": {
-        // ✅ FIX: use actual env value
-        target: import.meta.env.VITE_API_BASE_URL,
+  return {
+    plugins: [
+      react(),
+      babel({
+        presets: [reactCompilerPreset()],
+      }),
+    ],
 
-        changeOrigin: true,
-        secure: true,
+    server: {
+      port: 5173,
+      proxy: {
+        "/api": {
+          // ✅ Use env variable properly
+          target: env.VITE_API_BASE_URL || "http://localhost:5000",
 
-        configure: (proxy) => {
-          proxy.on("error", (err) => {
-            console.log("❌ Proxy error:", err.message);
-          });
+          changeOrigin: true,
+          secure: true,
 
-          proxy.on("proxyReq", (proxyReq, req) => {
-            console.log("➡️ Request:", req.method, req.url);
-          });
+          configure: (proxy) => {
+            proxy.on("error", (err) => {
+              console.log("❌ Proxy error:", err.message);
+            });
 
-          proxy.on("proxyRes", (proxyRes, req) => {
-            console.log("⬅️ Response:", proxyRes.statusCode, req.url);
-          });
+            proxy.on("proxyReq", (proxyReq, req) => {
+              console.log("➡️ Request:", req.method, req.url);
+            });
+
+            proxy.on("proxyRes", (proxyRes, req) => {
+              console.log("⬅️ Response:", proxyRes.statusCode, req.url);
+            });
+          },
         },
       },
     },
-  },
+
+    build: {
+      outDir: "dist",
+      sourcemap: false,
+      minify: "terser",
+    },
+  };
 });
