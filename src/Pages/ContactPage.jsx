@@ -118,7 +118,7 @@ const ContactPage = () => {
     
     try {
       // Using the API client
-      const data = await api("api/contact", {
+      const data = await api("/contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
