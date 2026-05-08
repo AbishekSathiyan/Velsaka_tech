@@ -14,6 +14,7 @@ import Contact from "../Pages/ContactPage";
 import Products from "../Pages/ProductsPage";
 //import Careers from "../Pages/CareersPage"; // ✅ FIXED
 import NotFound from "../Pages/NotFound";
+import UnderDevelopment from "../Pages/UnderDevelopment";
 
 /* =========================
    ADMIN PAGES
@@ -33,7 +34,7 @@ const AppRouter = () => {
         <Route path="/products" element={<Products />} />
         <Route path="/services" element={<Services />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/careers" element={<NotFound />} />
+        <Route path="/careers" element={<UnderDevelopment />} />
 
         {/* =========================
             ADMIN ROUTES
